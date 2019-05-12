@@ -31,22 +31,22 @@ int main(int argc, char** argv )
         return -1;
     }   
 
-    Mat image_grey;
-    cvtColor(image, image_grey, COLOR_BGR2GRAY);
+    //Mat image_grey;
+    //cvtColor(image, image_grey, COLOR_BGR2GRAY);
 
-    //Mat imgmed(image_grey.size(), image_grey.type());
-    Mat imgmedian(image_grey.size(), image_grey.type());
+    Mat imgmed(image.size(), image.type());
+    Mat imgmedian(image.size(), image.type());
 
 
     imshow("Start", image);
 
 
     cout << "applying filter" << endl;
-    //imgmed = med(image_grey, sm);
-    imgmedian = median(image_grey, sm);
+    imgmed = med(image, sm);
+    imgmedian = median(image, sm);
 
     cout << "fin" << endl; 
-    //imshow("MED", imgmed);
+    imshow("MED", imgmed);
     imshow("MEDIAN", imgmedian);
     waitKey(0);
     return 0;
@@ -55,13 +55,14 @@ int main(int argc, char** argv )
 Mat med(Mat image, int sm)
 {
   int med = 0;
+  int cont = 0;
   Mat dst(image.size(), image.type());
   for(auto i = 0; i < image.rows; i++)
   {
     for(auto j = 0; j < image.cols; j++)
     {
       med = 0;
-      auto cont = 0;
+      cont = 0;
       for(auto r = 0; r < sm; r++)
       {
         for(auto c = 0; c < sm; c++)
@@ -75,7 +76,7 @@ Mat med(Mat image, int sm)
           }
         }
       }
-      //cout << "assigning med" << endl;
+      //cout << med << " " << cont << endl;
       dst.at<uchar>(i,j) = med/cont;
       //cout << "med inserted in new matrix " << dst.at<uchar>(i,j) << endl;
     }
