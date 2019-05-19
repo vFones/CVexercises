@@ -18,7 +18,7 @@ int main(int argc, char** argv )
     }
     Mat image, image_gray;
 
-    image = imread( argv[1], COLOR_BGR2GRAY);
+    image = imread( argv[1], 0);
     // opening as greyscale image
     
     Mat dst(image.size(), image.type());
@@ -31,14 +31,14 @@ int main(int argc, char** argv )
 
     imshow("Start", image);
     
-    cvtColor(image, image_gray, COLOR_BGR2GRAY);
+    //cvtColor(image, image_gray, COLOR_BGR2GRAY);
 
     //process
     cout << "getting histogram" << endl;
-    vector<float> histogram = getHist(image_gray);
+    vector<float> histogram = getHist(image);
        
     cout << "equalizing histogram" << endl;
-    dst = equalizeHist(image_gray, histogram);
+    dst = equalizeHist(image, histogram);
 
     imshow("Result", dst);
     
