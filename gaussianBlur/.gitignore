@@ -1,0 +1,8 @@
+*
+
+!.gitignore
+!CMakeLists.txt
+!opencv.cpp
+!test.tif
+!lena.jpg
+!lizard_noisy.png
