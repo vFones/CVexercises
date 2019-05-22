@@ -4,48 +4,50 @@
 using namespace std;
 using namespace cv;
 
-void sobel(Mat src, Mat sobelized);
 void suppression(Mat src, Mat suppressed);
 
 int main(int argc, char** argv )
 {
-    if ( argc != 2 )
-    {
-        printf("usage: opencv <Image_Path>\n");
-        return -1;
-    }
-    Mat image, sobelized, isterized;
-    image = imread( argv[1], 0);
-    // opening as greyscale image
+  if ( argc != 4 )
+  {
+    printf("usage: opencv <Image_Path>\n");
+    return -1;
+  }
+  Mat image;
+  image = imread( argv[1], IMREAD_GRAYSCALE);
+  // opening as greyscale image
 
-    if ( !image.data )
-    {
-        printf("No image data \n");
-        return -1;
-    }
+  if ( !image.data )
+  {
+    printf("No image data \n");
+    return -1;
+  }
 
-    imshow("Start", image);
-    image.copyTo(sobelized);
+  imshow("Lenna", image);
+  
+  int size = atoi(argv[2]);
+  float sigma = atof(argv[3]);
 
-    sobel(image, sobelized);
-    imshow("SOBEL", sobelized);
-    
-    Mat suppressed(sobelized.size(), sobelized.type());
-    suppression(sobelized, suppressed);
-    imshow("SUPPRESSED", suppressed);
+  Mat blurred;
+  cv::GaussianBlur(image, blurred, cv::Size(size,size), sigma);
 
-    waitKey(0);
-    return 0;
-}
+  Mat gx, gy;
 
-int maxVector(vector <int> vec)
-{
-  auto max = 0;
-  for(auto i: vec)
-    if (i > max)
-      max = i;
+  cv::Sobel(blurred, gx, CV_32F, 1, 0);
+  cv::Sobel(blurred, gy, CV_32F, 0, 1);
 
-  return max;
+  Mat mag, mag_8U; 
+  cv::magnitude(gx, gy, mag);
+  mag.convertTo(mag_8U, CV_8U);
+  imshow("Magnitudo", mag_8U);
+  
+  Mat thetas;
+  cv::phase(gx, gy, thetas, true);
+  
+
+  
+  waitKey(0);
+  return 0;
 }
 
 
@@ -65,45 +67,9 @@ void suppression(Mat src, Mat suppressed)
             vec.push_back(src.at<uchar>(i+k, j+l)); 
         }
       }
-    vMax = maxVector(vec);
-    for(auto m=0; m<vec.size(); m++)
-      if(vec.at(m) < vMax)
-        vec.at(m)=0;
-
       suppressed.at<uchar>(i,j) = saturate_cast<uchar>(vMax);
     }
   }
   cout << "suppressed" << endl;
 }
 
-
-void sobel(Mat src, Mat sobelized)
-{
-  int gx[3][3] = {{-1,0,1}, {-2,0,2}, {-1,0,1}};
-  int gy[3][3] = {{-1,-2,-1},{0,0,0},{1,2,1}};
-
-  cout << "applying sobel" << endl;
-
-  for(auto i=0;i<src.rows;i++)
-  {  
-    for(auto j=0;j<src.cols;j++)
-    {
-      auto sobX=0, sobY=0;
-      auto gradient = 0;
-      for(auto k=0; k<3;k++)
-      {
-        for(auto l=0; l<3; l++)
-        {
-          if( !(i+k-1<0 || j+l-1 <0 || i+k>src.rows || j+l > src.cols) )
-          {
-            sobX += src.at<uchar>(i+k,j+l) * gx[k][l];
-            sobY += src.at<uchar>(i+k,j+l) * gx[k][l];
-          }
-        }
-      }
-      gradient = abs(sobX) + abs(sobY);
-      sobelized.at<uchar>(i,j) = saturate_cast<uchar>(gradient);
-    }  
-  }
-  cout << "Finished sobel" << endl;
-}
