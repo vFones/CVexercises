@@ -1,0 +1,7 @@
+*
+
+!.gitignore
+!CMakeLists.txt
+!opencv.cpp
+!test.tif
+!lena.jpg
