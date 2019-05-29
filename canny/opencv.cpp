@@ -85,7 +85,7 @@ void histeresis(Mat dst, int ht, int lt)
 
   while(strong_edges.size())
   {
-    Point edge = strong_edges.back();
+    Point edge = strong_edges.front();
     for(auto i = -1; i <= 1; i++)
     {
       for(auto j = -1; j <= 1; j++)
