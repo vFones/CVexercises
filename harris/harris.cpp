@@ -1,28 +1,34 @@
-#include <stdio.h>
+#include <iostream>
+#include <vector>
 #include <algorithm>
 #include <opencv2/opencv.hpp>
-
+#include <time.h>
 using namespace std;
 using namespace cv;
 
 Mat src, dst;
 Mat gx, gy;
+float thr;
+int cornersize;
 
 typedef struct supprPoint{
   Point p;
   float val;
 } SupprPoint;
 
-bool mycmp ( SupprPoint i, SupprPoint j ){ return ( i.val > j.val ); }
+typedef pair<Point, float> PointValue;
+
+bool mycmp ( PointValue i, PointValue j ){ return ( i.second > j.second ); }
 
 void cornerHarris_demo( int, void* );
 void myHarris();
 
 int main(int argc, char** argv )
 {
-  if ( argc != 2 )
+  srand(time(NULL));
+  if ( argc != 4 )
   {
-    cout << "usage: opencv <Image_Path> <blur mask size> <sigma> <high> <low>" << endl;
+    cout << "usage: opencv <Image_Path> <threshold>" << endl;
     return -1;
   }
   src = imread( argv[1], IMREAD_GRAYSCALE);
@@ -33,6 +39,9 @@ int main(int argc, char** argv )
     cout << "No image data" << endl;
     return -1;
   }
+  thr = atof(argv[2]);
+  cornersize= atoi(argv[3]);
+  GaussianBlur(src, src, cv::Size(5, 5), 2.4);
   cvtColor(src, dst, COLOR_GRAY2BGR);
 
   imshow( "Harris", src);
@@ -72,7 +81,9 @@ void myHarris()
   Mat R(src.size(), CV_32F);
   float k = 0.04;
   
-  vector<SupprPoint> l;
+  float min = numeric_limits<float>::max();
+  float max = numeric_limits<float>::min();
+
   for(auto i = 0; i < src.rows; i++)
   {
     for(auto j = 0; j < src.cols; j++)
@@ -81,61 +92,57 @@ void myHarris()
       float detC = (gx2.at<float>(i,j) * gy2.at<float>(i,j) ) - (gxy.at<float>(i,j) * gxy.at<float>(i,j));
       float trace = (gx2.at<float>(i,j) + gy2.at<float>(i,j));
       R.at<float>(i,j) = detC - k * (trace * trace);
-      if(R.at<float>(i,j) > 0.9)
-      {
-        supp.p = Point(i,j);
-        supp.val = R.at<float>(i,j);
-        l.push_back(supp);
-      }
+      
+      if(R.at<float>(i,j) < min)
+        min = R.at<float>(i,j);
+      if(R.at<float>(i,j) > max)
+        max = R.at<float>(i,j);
     }
   }
   cout << "calculated R mat" << endl;
 
-
-  cout << "suppressing" << endl;
-  sort(l.begin(), l.end(), mycmp);
-  reverse(l.begin(), l.end());
-  while(l.size())
-  {
-    SupprPoint tocheck = l.back();
-    vector<SupprPoint> tempvect;
-    
-    for(auto i = -1; i <= 1; i++)
-    {
-      for(auto j = -1; j <= 1; j++)
+  vector<PointValue> l;
+  for(auto i=0; i < src.rows; i++)
+    for(auto j=0; j<src.cols; j++)
+    { 
+      PointValue tosuppress;
+      R.at<float>(i,j) = (R.at<float>(i,j) - min)/(max-min);
+      if(R.at<float>(i,j) > thr)
       {
-        SupprPoint supp;
-        if(tocheck.p.x+i > 0 && tocheck.p.y+j > 0 && tocheck.p.x+i < src.rows && tocheck.p.y+j < src.cols)
-        {
-          supp.p = Point(tocheck.p.x+i,tocheck.p.y+j);
-          supp.val = R.at<float>(tocheck.p.x+i, tocheck.p.y+j);
-          tempvect.push_back(supp);
-        }
+        tosuppress = make_pair(Point(i,j), R.at<float>(i,j));
+        l.push_back(tosuppress);
       }
     }
-    auto max = max_element(tempvect.begin(), tempvect.end(), mycmp);
-    for(auto i = 0; i<tempvect.size(); i++)
-    { 
-      auto tmp = tempvect.at(i);
-      if(max->val != tmp.val)
-        R.at<float>(tmp.p.x, tmp.p.y) = 0;
+
+  sort(l.begin(), l.end(), mycmp);
+  reverse(l.begin(), l.end());
+  
+  cout << "suppressing vect: " << l.size() << endl;
+  
+  for(auto i = 0; i < l.size(); i++)
+  {
+    for(auto j = i+1; j < l.size(); j++)
+    {
+      int ix = l.at(i).first.x;
+      int iy = l.at(i).first.y;
+      int jx = l.at(j).first.x;
+      int jy = l.at(j).first.y;
+      if(abs(ix - jx) <= cornersize && abs(iy - jy) <= cornersize)
+      {
+        l.erase(l.begin()+j);
+        j--;
+      }
     }
-    tempvect.clear();
-    l.pop_back();
   }
   cout << "suppressed" << endl;
 
+  cout << "Drawing circles" << endl;
 
-  float t = 0.9;
-  for(auto i = 0; i < src.rows; i++)
+  for(auto i = 0; i < l.size(); i++)
   {
-    for(auto j = 0; j < src.cols; j++)
-    {
-      //if(R.at<float>(i,j) > t)
-        circle(dst, Point(j, i), 3, Scalar(0, 0, 255), 1, 4, 0);
-    }
+    circle(dst, Point(l.at(i).first.y, l.at(i).first.x), 8, Scalar(0, 0, 220), 1);
   }
-  cout << "showing circles" << endl;
+  cout << "fin" << endl;
 
   imshow("My harris", dst);
 }
