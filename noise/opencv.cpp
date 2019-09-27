@@ -6,7 +6,7 @@
 using namespace std;
 using namespace cv;
 
-Mat median(Mat, int);
+void medianBlur(Mat, int);
 Mat med(Mat, int);
 
 int main(int argc, char** argv )
@@ -43,7 +43,7 @@ int main(int argc, char** argv )
 
     cout << "applying filter" << endl;
     imgmed = med(image, sm);
-    imgmedian = median(image, sm);
+    medianBlur(image, imgmedian, sm);
 
     cout << "fin" << endl; 
     imshow("MED", imgmed);
@@ -84,37 +84,35 @@ Mat med(Mat image, int sm)
   return dst;
 }
 
-Mat median(Mat image, int sm)
+void medianBlur(cv::Mat &src, cv::Mat &dst, int size_kernel)
 {
-  auto v = 0;
-  Mat dst(image.size(), image.type());
-  vector <int>vmedian;
-  for(auto i = 0; i < image.rows; i++)
+  auto k = size_kernel/2;
+  std::vector<uchar> tmpVector;
+  
+  for(auto x = 0; x < src.rows; x++)
   {
-    for(auto j = 0; j < image.cols; j++)
+    for(auto y = 0; y < src.cols; y++)
     {
-      for(auto r = 0; r < sm; r++)
+
+      for(auto i = -k; i <= k; i++)
       {
-        for(auto c = 0; c < sm; c++)
+        for(auto j = -k; j <= k; j++)
         {
-          //cout << "Mask: " << r << "," << c << endl;
-          if(!(i+r-1 < 0 || j+c-1 < 0 || i+r >= image.rows || j+c >= image.cols))
-          {
-            //cout << "Inserting in vector pixel (r+i-1, c+j-1): " << r+i-1 << "," << c+j-1 << endl;
-            v = image.at<uchar>(r+i, c+j);
-            vmedian.push_back(v);
-          }
+          auto tmpx = x-i;
+          auto tmpy = y-j;
+          if(tmpx > 0 && tmpy > 0 && tmpx <= src.rows && tmpy <= src.cols)
+            tmpVector.push_back(src.at<uchar>(tmpx, tmpy));
         }
       }
-      sort(vmedian.begin(), vmedian.end());
-      auto median = vmedian.at( vmedian.size()/2 ); 
-      //cout << "assigning median " << median;
-      //cout << " to this pixel: " << image.at<uchar>(i,j) << endl;
-      dst.at<uchar>(i,j) = median; 
-      //cout << "median inserted in new matrix " << dst.at<uchar>(i,j) << endl;
-      vmedian.clear();
+
+      sort(tmpVector.begin(), tmpVector.end());
+      int med = tmpVector.at(tmpVector.size()/2);
+      
+      
+      dst.at<uchar>(x, y) = cv::saturate_cast<uchar>(med);
+      tmpVector.clear();
     }
   }
-  return dst;
+  return;
 }
 
