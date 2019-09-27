@@ -58,7 +58,9 @@ int main(int argc, char** argv )
   imshow("My Canny", thresholded);
 
   Mat cvcanny(image.size(), CV_8U);
-  cv::Canny(blurred, cvcanny, canny_lt, canny_ht, size, true);
+
+  //true so calculate magnitudo with squares
+  cv::Canny(blurred, cvcanny, canny_lt, canny_ht, 3, true);
   imshow("OpenCV Canny", cvcanny);
 
   waitKey(0);
@@ -94,7 +96,7 @@ void histeresis(Mat dst, int ht, int lt)
         if( point.x >= 0 && point.y >= 0 && point.x < dst.rows && point.y < dst.cols )
         {
           if( dst.at<uchar>(point.x, point.y) != 0 && dst.at<uchar>(point.x, point.y) != 255 )
-          {  
+          {
             dst.at<uchar>(point.x, point.y) = 255;
             strong_edges.push_back(point);
           }
