@@ -1,149 +1,119 @@
 #include <iostream>
-#include <vector>
-#include <algorithm>
 #include <opencv2/opencv.hpp>
-#include <time.h>
-using namespace std;
-using namespace cv;
 
-Mat src, dst;
-Mat gx, gy;
-float thr;
-int cornersize;
 
-typedef struct supprPoint{
-  Point p;
-  float val;
-} SupprPoint;
+//using a pair of Point and float type for storing corners
+typedef std::pair<cv::Point, float> corner;
 
-typedef pair<Point, float> PointValue;
+//harris function return a vector of corners, using that to draw circler in main
+std::vector<corner> harris(cv::Mat &src, float thresh, int corner_dist);
 
-bool mycmp ( PointValue i, PointValue j ){ return ( i.second > j.second ); }
-
-void cornerHarris_demo( int, void* );
-void myHarris();
-
-int main(int argc, char** argv )
+int main(int argc, char **argv)
 {
-  srand(time(NULL));
   if ( argc != 4 )
   {
-    cout << "usage: opencv <Image_Path> <threshold>" << endl;
+    std::cerr << "usage: opencv <Image_Path> <threshold>" << std::endl;
     return -1;
   }
-  src = imread( argv[1], IMREAD_GRAYSCALE);
-  // opening as greyscale image
-
-  if ( !src.data )
-  {
-    cout << "No image data" << endl;
+  
+  cv::Mat src = cv::imread(argv[1], cv::IMREAD_GRAYSCALE);
+  if(src.empty())
+   {
+    std::cerr << "No image data" << std::endl;
     return -1;
   }
-  thr = atof(argv[2]);
-  cornersize= atoi(argv[3]);
-  GaussianBlur(src, src, cv::Size(5, 5), 2.4);
-  cvtColor(src, dst, COLOR_GRAY2BGR);
 
-  imshow( "Harris", src);
+  cv::imshow("SRC", src);
+  
+  //thresholg used for corner response (100 suitable for chessboard)
+  float thresh = atof(argv[2]);
 
-  Sobel(src, gx, CV_32F, 1, 0, 3);
-  Sobel(src, gy, CV_32F, 0, 1, 3);
-  cout << "apply sobel" << endl;
-  myHarris();
+  //corner distance in pixel (less = more nearby corners)
+  int corner_dist = atoi(argv[3]);
 
-  waitKey(0);
-  return 0;
+  cv::Mat dst = src.clone();
+  //passing image and threshold and corner distance to harris function
+  std::vector<corner> corners = harris(src, thresh, corner_dist);
+
+  //coloring destination for drawing colored circles
+  cv::cvtColor(dst, dst, cv::COLOR_GRAY2BGR);
+
+
+  for(auto i = 0; i < corners.size(); i++)
+    cv::circle(dst, cv::Point(corners[i].first.y, corners[i].first.x), 7, cv::Scalar(0,0,255), 1);
+
+  cv::imshow("DST", dst);
+  cv::waitKey(0);
+  exit(EXIT_SUCCESS);
 }
 
 
-void myHarris()
+std::vector<corner> harris(cv::Mat &src, float thresh, int corner_dist)
 {
-  Mat gx2(gx.size(), gx.type());
-  Mat gy2(gy.size(), gy.type());
-  Mat gxy(gx.size(), gx.type());
-  
-  cout << "Calculating gx2, gy2, gxy" << endl;
-  for(auto i = 0; i < src.rows; i++)
-  {
-    for(auto j = 0; j < src.cols; j++)
+  cv::Mat gx = cv::Mat(src.rows, src.cols, CV_32F);
+  cv::Mat gy = cv::Mat(src.rows, src.cols, CV_32F);
+  cv::Mat gxy, gx2, gy2;
+  //first apply a gaussian blur to image
+  cv::GaussianBlur(src, src, cv::Size(5,5), 2.4);
+  //calculate derivates with Sobel operators
+  cv::Sobel(src, gx, CV_32F, 1, 0);
+  cv::Sobel(src, gy, CV_32F, 0, 1);
+  gxy = gx.mul(gy);
+  gx2 = gx.mul(gx);
+  gy2 = gy.mul(gy);
+
+  //using gaussian to apply a funzione peso to consider only suitable corner pixel
+  cv::GaussianBlur(gxy, gxy, cv::Size(5,5), 2.4);
+  cv::GaussianBlur(gx2, gx2, cv::Size(5,5), 2.4);
+  cv::GaussianBlur(gy2, gy2, cv::Size(5,5), 2.4);
+
+  std::vector <corner> corners;
+  cv::Mat R = cv::Mat(src.size(), CV_32F);
+
+  std::cout << "founding corner" << std::endl;
+
+  for(int i = 0; i < src.rows; i++)
+    for(int j = 0; j < src.cols; j++)
     {
-      gx2.at<float>(i,j) = gx.at<float>(i,j) * gx.at<float>(i,j);
-      gy2.at<float>(i,j) = gy.at<float>(i,j) * gy.at<float>(i,j);
-      gxy.at<float>(i,j) = gx.at<float>(i,j) * gy.at<float>(i,j);
+      //calculating harris Response matrix with det(M) - K * trace(M)^2
+      //where M is coovariance matrix and K is a very low number (usually 0.04 <= k <= 0.06)
+      float det = gx2.at<float>(i,j) * gy2.at<float>(i,j) - pow(gxy.at<float>(i,j),2);
+      float trace = gx2.at<float>(i,j) + gy2.at<float>(i,j);
+      R.at<float>(i,j) = det - 0.04*(trace*trace);
     }
-  }
-  
-  GaussianBlur(gx2, gx2, cv::Size(5, 5), 2.4);
-  GaussianBlur(gy2, gy2, cv::Size(5, 5), 2.4);
-  GaussianBlur(gxy, gxy, cv::Size(5, 5), 2.4);
-  cout << "Smoothed" << endl;
 
-  Mat R(src.size(), CV_32F);
-  float k = 0.04;
-  
-  float min = numeric_limits<float>::max();
-  float max = numeric_limits<float>::min();
+  //pushing values only if corner is higher than value
+  for(int i = 0; i < src.rows; i++)
+    for(int j = 0 ; j < src.cols; j++)
+      if(R.at<float>(i,j) > thresh)
+        corners.push_back(std::make_pair(cv::Point(i, j), R.at<float>(i, j)));
 
-  for(auto i = 0; i < src.rows; i++)
-  {
-    for(auto j = 0; j < src.cols; j++)
+  std::cout << "Sorting corners" << std::endl;
+
+  //sorting using values as meter
+  std::sort(
+    corners.begin(),
+    corners.end(),
+    [](const corner &l, const corner &r) {
+      return l.second > r.second; });
+
+
+  //suppressing corners that are in a suitable distance later in vector since
+  //sorted reversed we are looking for a "lesser corner" and then erasing from vector
+  std::cout << "Suppressing " << corners.size() << std::endl;
+  for(auto i = 0; i < corners.size(); i++)
+    for(auto j = i+1; j < corners.size(); j++)
     {
-      SupprPoint supp;
-      float detC = (gx2.at<float>(i,j) * gy2.at<float>(i,j) ) - (gxy.at<float>(i,j) * gxy.at<float>(i,j));
-      float trace = (gx2.at<float>(i,j) + gy2.at<float>(i,j));
-      R.at<float>(i,j) = detC - k * (trace * trace);
+      cv::Point I(corners[i].first.x, corners[i].first.y);
+      cv::Point J(corners[j].first.x, corners[j].first.y);
       
-      if(R.at<float>(i,j) < min)
-        min = R.at<float>(i,j);
-      if(R.at<float>(i,j) > max)
-        max = R.at<float>(i,j);
-    }
-  }
-  cout << "calculated R mat" << endl;
-
-  vector<PointValue> l;
-  for(auto i=0; i < src.rows; i++)
-    for(auto j=0; j<src.cols; j++)
-    { 
-      PointValue tosuppress;
-      R.at<float>(i,j) = (R.at<float>(i,j) - min)/(max-min);
-      if(R.at<float>(i,j) > thr)
+      if(abs(I.x - J.x) < corner_dist && abs(I.y - J.y) < corner_dist)
       {
-        tosuppress = make_pair(Point(i,j), R.at<float>(i,j));
-        l.push_back(tosuppress);
-      }
-    }
-
-  sort(l.begin(), l.end(), mycmp);
-  reverse(l.begin(), l.end());
-  
-  cout << "suppressing vect: " << l.size() << endl;
-  
-  for(auto i = 0; i < l.size(); i++)
-  {
-    for(auto j = i+1; j < l.size(); j++)
-    {
-      int ix = l.at(i).first.x;
-      int iy = l.at(i).first.y;
-      int jx = l.at(j).first.x;
-      int jy = l.at(j).first.y;
-      if(abs(ix - jx) <= cornersize && abs(iy - jy) <= cornersize)
-      {
-        l.erase(l.begin()+j);
+        corners.erase(corners.begin()+j);
         j--;
       }
     }
-  }
-  cout << "suppressed" << endl;
-
-  cout << "Drawing circles" << endl;
-
-  for(auto i = 0; i < l.size(); i++)
-  {
-    circle(dst, Point(l.at(i).first.y, l.at(i).first.x), 8, Scalar(0, 0, 220), 1);
-  }
-  cout << "fin" << endl;
-
-  imshow("My harris", dst);
+  
+  std::cout << "Fin harris" << std::endl;
+  return corners;
 }
-
