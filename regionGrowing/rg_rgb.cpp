@@ -3,20 +3,6 @@
 #include <opencv2/opencv.hpp>
 
 cv::Mat raw_img;
-int r_dect,
-    c_dect;
-
-void mouseDect(int event, int col, int row, int flags, void* data)
-{
-    if(event == cv::EVENT_LBUTTONDOWN)
-    {
-        r_dect = row, c_dect = col;
-        cv::Vec3b rgb = raw_img.at<cv::Vec3b>(row,col);
-
-        std::cout << "(r,c) = (" << row << ", " << col << ")\n" \
-            << "BGR = [" << (int)rgb[0] << ", "  << (int)rgb[1] << ", "  << (int)rgb[2] << "]\n";
-        }
-}
 
 void regionGrowingRGB(cv::Mat src, cv::Mat &dst, int min_threshold);
 
@@ -41,14 +27,6 @@ int main(int argc, char **argv)
   cv::Mat dst(raw_img.size(), raw_img.type());
   
 
-  //appiattisco tutt a maronn (ngap a me preprocessing)
-  //cv::medianBlur(raw_img, raw_img, 17);
-
-  cv::namedWindow("img", cv::WINDOW_AUTOSIZE );
-  cv::setMouseCallback("img", mouseDect, NULL);
-  cv::imshow("img", raw_img);
-
-  //applico RG con magagna dei colori vicini al rosso
   raw_img.copyTo(dst);
   regionGrowingRGB(raw_img, dst, atoi(argv[2]));
   cv::imshow("dst img", dst);
@@ -76,7 +54,7 @@ void regionGrowingRGB(cv::Mat src, cv::Mat &dst, int min_threshold)
   
   while( num_pix )
   {
-
+    //worst new seed getter ever
     x_seed = rand()%src.rows;
     y_seed = rand()%src.cols;
     
@@ -85,14 +63,6 @@ void regionGrowingRGB(cv::Mat src, cv::Mat &dst, int min_threshold)
       regions.at<float>(x_seed, y_seed) = 1;
       num_pix--;
       cv::Vec3b pixelValue = src.at<cv::Vec3b>(x_seed, y_seed);
-
-      /* MAGAGNA colore rosso
-      if(pixelValue[0] < 10 && pixelValue[2] > 50 && (pixelValue[1] < 60 || pixelValue[1] == 0) )
-        dst.at<cv::Vec3b>(x_seed, y_seed) = pixelValue;
-      else
-        dst.at<cv::Vec3b>(x_seed, y_seed) = black_pixel;
-      //DIOPORCO
-      */
 
       pixelVector.clear();
       pixelVector.push_back(cv::Point(x_seed, y_seed));
@@ -115,14 +85,6 @@ void regionGrowingRGB(cv::Mat src, cv::Mat &dst, int min_threshold)
                 regions.at<float>(u+x, v+y) = 1;
                 num_pix--;
                 dst.at<cv::Vec3b>(u+x, v+y) = pixelValue;
-
-                /* MAGAGNA colore rosso
-                if(pixelValue[0] < 10 && pixelValue[2] > 50 && (pixelValue[1] < 60 || pixelValue[1] == 0) )
-                  
-                else
-                  dst.at<cv::Vec3b>(u+x, v+y) = black_pixel;
-                //MAGAGNA
-                */
 
                 pixelVector.push_back(cv::Point(u+x, y+v));
               }
