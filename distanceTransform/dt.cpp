@@ -1,68 +1,82 @@
 #include <iostream>
-#include <math.h>
 #include <opencv2/opencv.hpp>
 
-void distanceTransform(cv::Mat src, cv::Mat &dst);
+cv::Mat distanceTransform(cv::Mat &src);
 
 int main(int argc, char **argv)
 {
-    if(argc != 2)
-    {
-        std::cerr << "fews args" << std::endl;
-        exit(-1);
-    }
-    cv::Mat raw_img = cv::imread(argv[1], cv::IMREAD_COLOR);
-    if(!raw_img.data)
-    {
-        std::cerr << "error image" << std::endl;
-        exit(-2);
-    }
-    cv::imshow("Raw", raw_img);
+  if(argc < 2)
+  {
+    std::cerr << "image path not found" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  cv::Mat src = cv::imread(argv[1], cv::IMREAD_GRAYSCALE);
+  if(src.empty())
+  {
+    std::cerr << "Image not valid" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+  cv::imshow("Source", src);
 
-    cv::Mat img_bin;
-    cv::cvtColor(raw_img, img_bin, cv::COLOR_BGRA2GRAY);
-    //cv::GaussianBlur(img_bin, img_bin, cv::Size(5,5), 1.4);
-    cv::threshold(img_bin, img_bin, 127, 255, cv::THRESH_BINARY);
-    cv::imshow("Binarized", img_bin);
+  cv::Mat dst = distanceTransform(src);
+  cv::imshow("Distance Transform", dst);
+  cv::waitKey(0);
 
-    cv::Mat dt;// (raw_img.size(), CV_8U);
-    distanceTransform(img_bin, dt);
-    cv::imshow("Distance Transformed", dt);
-
-    cv::waitKey(0);
-    return 0;
+  return 0;
 }
 
-void distanceTransform(cv::Mat src, cv::Mat &dst)
+
+cv::Mat distanceTransform(cv::Mat &src)
 {
-    for(int i = 1; i < src.rows; i++)
+  cv::Mat dt = src.clone();
+  //threshold for binary conversion
+  cv::threshold(dt, dt, 127, 255, cv::THRESH_BINARY_INV);
+  
+  /*
+  for(auto i=0;i<3;i++)
+    cv::dilate(dt, dt,  cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(11,11)));
+  
+  for(auto i=0; i<3;i++)
+    cv::erode(dt, dt,  cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(11,11)));
+  */
+
+
+  //start from top and check up and left pixels
+  for(auto i=0; i<dt.rows; i++)
+  {
+    for(auto j=0; j<dt.cols; j++)
     {
-        for(int j = 1; j < src.cols; j++)
-        {
-            if(src.at<uchar>(i, j) != 0)
-            {
-                int N = src.at<uchar>(i-1,j);
-                int W = src.at<uchar>(i,j-1);
-
-                src.at<uchar>(i,j) = 1 + std::min(N,W);
-            }
-        }
+      int U, L;
+      U=L=0;
+      if(i-1 >= 0)
+        U = dt.at<uchar>(i-1, j);
+      if(j-1 >= 0)
+        L = dt.at<uchar>(i, j-1);
+      
+      //choose minimum and apply to result matrix, incrementing by one
+      dt.at<uchar>(i,j) = 1 + cv::min(cv::min(U, L), (int)dt.at<uchar>(i,j));
     }
+  }
 
-    for(int i = src.rows; i >=0; i--)
+  //do the same but start from bottom
+  for(auto i=dt.rows; i>=0; i--)
+  {
+    for(auto j=dt.cols; j>=0; j--)
     {
-        for(int j = src.cols; j >=0; j--)
-        {
-            if(src.at<uchar>(i, j) != 0)
-            {
-                int S = src.at<uchar>(i+1,j);
-                int E = src.at<uchar>(i,j+1);
+      int D, R;
+      D=R=0;
 
-                src.at<uchar>(i,j) = 1 + std::min( std::min(S,E), (int)src.at<uchar>(i,j));
-            }
-        }
+      if(i+1 < dt.rows)
+        D = dt.at<uchar>(i+1,j);
+      if(j+1 < dt.cols)
+        R = dt.at<uchar>(i, j+1);
+      
+      dt.at<uchar>(i,j) = 1 + cv::min(cv::min(D,R), (int)dt.at<uchar>(i,j));
     }
-    cv::normalize(src, dst, 0, 255, cv::NORM_MINMAX);
+  }
+  
+  //now convert to a gray scale image and return
+  cv::normalize(dt, dt, 0, 255, cv::NORM_MINMAX);
 
-    return;
+  return dt;
 }
