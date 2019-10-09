@@ -15,7 +15,7 @@ void callback(int event, int col, int row, int, void*)
     x_seed = row; y_seed = col;
     std::cout << "BGR: " << src.at<cv::Vec3b>(row, col) << std::endl;
     std::cout << "HSV: " << hsv.at<cv::Vec3b>(row, col) << std::endl;
-
+    std::cout << "row, cols: " << row << "," << col << std::endl;
   }
 }
 
