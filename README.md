@@ -33,3 +33,13 @@ Equalize an image histogram.
 
 Algorithm for Corner detection in an image.
 
+### Hough circles
+
+<p align="center">
+  <img src="https://i.imgur.com/zMmsnmH.png">
+</p>
+
+
+
+Detection circles in images: minimum radius, max radius and threshold for accumulator.
+

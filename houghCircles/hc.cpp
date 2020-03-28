@@ -6,18 +6,19 @@ cv::Mat houghCircle(cv::Mat &canny, cv::Mat &src, int minrad, int maxrad, int th
 
 int main(int argc, char **argv)
 {
-  if(argc < 2)
+  if(argc < 5)
   {
     std::cerr << "exe, path, min radius, max one, votes threshold" << std::endl;
     exit(EXIT_FAILURE);
   }
-  cv::Mat src = cv::imread(argv[1], 0);
+  cv::Mat src = cv::imread(argv[1], cv::IMREAD_COLOR);
   if(src.empty())
   {
     exit(EXIT_FAILURE);
   }
   cv::imshow("SRC", src);
-
+  cv::cvtColor(src, src, cv::COLOR_BGR2GRAY);
+  
   //making a gaussian blur before canny
   cv::Mat blur;
   cv::GaussianBlur(src, blur, cv::Size(5,5), 2.4);
