@@ -1,15 +1,21 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
 
-cv::Mat distanceTransform(cv::Mat &src);
+cv::Mat distanceTransform(cv::Mat &src, int op);
 
 int main(int argc, char **argv)
 {
-  if(argc < 2)
+  if(argc < 3)
   {
-    std::cerr << "image path not found" << std::endl;
+    std::cerr << "image path not found or no options selected" << std::endl;
+    std::cerr << "use 0 for binary conversion, 1 to invert" << std::endl;
     exit(EXIT_FAILURE);
   }
+  auto op = std::atoi(argv[2]);
+
+  if(op > 1)
+    exit(EXIT_FAILURE);
+
   cv::Mat src = cv::imread(argv[1], cv::IMREAD_GRAYSCALE);
   if(src.empty())
   {
@@ -18,7 +24,7 @@ int main(int argc, char **argv)
   }
   cv::imshow("Source", src);
 
-  cv::Mat dst = distanceTransform(src);
+  cv::Mat dst = distanceTransform(src, op);
   cv::imshow("Distance Transform", dst);
   cv::waitKey(0);
 
@@ -26,12 +32,15 @@ int main(int argc, char **argv)
 }
 
 
-cv::Mat distanceTransform(cv::Mat &src)
+cv::Mat distanceTransform(cv::Mat &src, int op)
 {
   cv::Mat dt = src.clone();
   //threshold for binary conversion
-  cv::threshold(dt, dt, 127, 255, cv::THRESH_BINARY_INV);
-  
+  if(op)
+    cv::threshold(dt, dt, 127, 255, cv::THRESH_BINARY_INV);
+  else
+    cv::threshold(dt, dt, 127, 255, cv::THRESH_BINARY);
+
   /*
   for(auto i=0;i<3;i++)
     cv::dilate(dt, dt,  cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(11,11)));
