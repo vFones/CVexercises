@@ -63,8 +63,13 @@ Auto version stops if there isn't a variation under a certain threshold. Interac
 
 
 
+### Noise remover
 
+<p align="center">
+  <img src="https://i.imgur.com/x48gY8a.png">
+</p>
 
+Apply a median blur for salt pepper noise images or mean blur for noisy images.
 
 
 
