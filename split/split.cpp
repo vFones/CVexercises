@@ -4,13 +4,16 @@
 cv::Mat src, dst;
 cv::Vec3d mean(int ri, int rf, int ci, int cf);
 double variance(int ri, int rf, int ci, int cf);
-void colorImg(cv::Mat immagine,int ri, int rf, int ci, int cf, cv::Vec3b colore);
+void colorimg(cv::Mat immagine,int ri, int rf, int ci, int cf, cv::Vec3d colore);
 void split_color(int ri, int rf, int ci, int cf);
 double thres, size;
 
 int main(int argc, char **argv)
 {
-  
+
+  if(argc < 3)
+    exit(-1);
+
   src = imread(argv[1], cv::IMREAD_COLOR);
   
   if (src.data == nullptr){

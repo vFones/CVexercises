@@ -88,3 +88,12 @@ Apply a median blur for salt pepper noise images or mean blur for noisy images.
 </p>
 
 Region growing using RGB distance and HSV tint for just a color expansion. Interactive must click on source image to expand. RGB and Greyscale version tries to expand automatically.
+
+### Split (& Merge)
+<p align="center">
+  <img src="https://i.imgur.com/tTH8Z7H.png">
+</p>
+
+Recursively split images if RGB dist is less then threshold. Try to recolor blocks up to max block size.
+
+
