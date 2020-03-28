@@ -102,7 +102,7 @@ void Canny(cv::Mat &magnitude, cv::Mat &phase, cv::Mat &dst, int t1, int t2)
   std::cout << "Histeresis" << std::endl;
   // using thresholds for a first binarization
   // if magnitude are higher than higher threshold then they are strong edges
-  auto strong_edges = std::list<cv::Point>();
+  auto strong_edges = std::list<cv::Point2i>();
 
   for(auto i = 0; i < dst.rows; i++)
   {
@@ -126,8 +126,8 @@ void Canny(cv::Mat &magnitude, cv::Mat &phase, cv::Mat &dst, int t1, int t2)
     for(auto i = -1; i <= 1; i++)
       for(auto j = -1; j <= 1; j++)
       {
-        cv::Point point(i+edge.x, i+edge.y);
-        if(point.x >= 0 && point.y >= 0 && point.x <= dst.rows && point.y <= dst.cols)
+        cv::Point2i point(i+edge.x, j+edge.y);
+        if(point.x >= 0 && point.y >= 0 && point.x < dst.rows && point.y < dst.cols)
         {
           auto value = dst.at<uchar>(point.x, point.y);
           if(value != 255 && value != 0)
