@@ -51,6 +51,17 @@ Detection circles in images: minimum radius, max radius and threshold for accumu
 
 Detection lines in images: input is the threshold for accumulator.
 
+### K-means
+
+<p align="center">
+  <img src="https://i.imgur.com/HhIijfS.png">
+</p>
+
+K-means algorithm find correct cluster starting from K centroids: applied to images find correct
+cluster for a pixel based on RGB distance (euclidian).
+Auto version stops if there isn't a variation under a certain threshold. Interactive can select with mouse centroids rather then random. Iterative use N iteration before stop.
+
+
 
 
 

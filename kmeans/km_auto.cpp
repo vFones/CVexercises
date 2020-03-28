@@ -12,7 +12,7 @@ int main(int argc, char **argv)
 {
   if(argc < 3)
   {
-    std::cerr << "exe, path, k, iterations" << std::endl;
+    std::cerr << "exe, path, k, min pixel variation" << std::endl;
     exit(EXIT_FAILURE);
   }
   cv::Mat src = cv::imread(argv[1], cv::IMREAD_ANYCOLOR);
