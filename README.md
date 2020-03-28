@@ -25,3 +25,11 @@ Used for distance mapping.
 </p>
 
 Equalize an image histogram.
+
+### Harris
+<p align="center">
+  <img src="https://i.imgur.com/9llrdyG.png">
+</p>
+
+Algorithm for Corner detection in an image.
+
