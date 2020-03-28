@@ -4,7 +4,7 @@ Some exercise for an exam. (Trying to not use openCV implementation)
 
 ### canny
 <p align="center">
-  <img src="https://i.imgur.com/mpgsokv.png">
+  <img src="https://i.imgur.com/mPGsoKV.png">
 </p>
 
 Canny algorithm for edge detection.
