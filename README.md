@@ -73,7 +73,6 @@ Apply a median blur for salt pepper noise images or mean blur for noisy images.
 
 ### Edge detection with operators
 
-
 <p align="center">
   <img src="https://i.imgur.com/qm2Tr2S.png">
 </p>
@@ -82,5 +81,10 @@ Apply a median blur for salt pepper noise images or mean blur for noisy images.
   <img src="https://i.imgur.com/kDDg3ZX.png">
 </p>
 
+### Region growing
 
+<p align="center">
+  <img src="https://i.imgur.com/GM01lI8.png">
+</p>
 
+Region growing using RGB distance and HSV tint for just a color expansion. Interactive must click on source image to expand. RGB and Greyscale version tries to expand automatically.

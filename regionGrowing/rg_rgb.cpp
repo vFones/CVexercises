@@ -27,7 +27,6 @@ int main(int argc, char **argv)
   cv::Mat dst(raw_img.size(), raw_img.type());
   
 
-  raw_img.copyTo(dst);
   regionGrowingRGB(raw_img, dst, atoi(argv[2]));
   cv::imshow("dst img", dst);
 
@@ -37,12 +36,13 @@ int main(int argc, char **argv)
 
 double euclideDist(cv::Vec3b &a, cv::Vec3b &b)
 {
-  double sum;
+  double sum = 0.0;
   for(int i=0; i<3; i++)
     sum += std::pow(a[i]-b[i], 2);
   sum = std::sqrt(sum);
   return sum;
 }
+
 void regionGrowingRGB(cv::Mat src, cv::Mat &dst, int min_threshold)
 {
   std::vector<cv::Point> pixelVector;
