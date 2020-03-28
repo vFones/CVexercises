@@ -40,6 +40,20 @@ Algorithm for Corner detection in an image.
 </p>
 
 
-
 Detection circles in images: minimum radius, max radius and threshold for accumulator.
+
+### Hough lines
+
+<p align="center">
+  <img src="https://i.imgur.com/VVVtdeM.png">
+</p>
+
+
+Detection lines in images: input is the threshold for accumulator.
+
+
+
+
+
+
 
