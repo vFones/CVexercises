@@ -71,5 +71,16 @@ Auto version stops if there isn't a variation under a certain threshold. Interac
 
 Apply a median blur for salt pepper noise images or mean blur for noisy images.
 
+### Edge detection with operators
+
+
+<p align="center">
+  <img src="https://i.imgur.com/qm2Tr2S.png">
+</p>
+
+<p align="center">
+  <img src="https://i.imgur.com/kDDg3ZX.png">
+</p>
+
 
 
